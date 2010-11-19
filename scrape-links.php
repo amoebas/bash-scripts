@@ -27,19 +27,38 @@ if (!$html) {
 
 // parse the html into a DOMDocument
 $dom = new DOMDocument();
-@$dom->loadHTML($html);
+@$dom->loadHTML( $html );
 
 // grab all the on the page
-$xpath = new DOMXPath($dom);
+$xpath = new DOMXPath( $dom );
 $hrefs = $xpath->evaluate("/html/body//a");
 
+$urls = array();
 for ($i = 0; $i < $hrefs->length; $i++) {
 	$href = $hrefs->item($i);
 	$url = $href->getAttribute('href');
+
 	if( substr( $url, 0, 1 ) == '/' ) {
 		$url = substr( $url, 1 );
 	}
-	if ( !stristr( $url, 'http' ) && !stristr( $url, 'mailto' ) && substr( $url, 0, 1) !== "#" )  { 
-		echo $url.PHP_EOL;
+	
+	// Strips hash anchors	
+	$url = strip_hash_anchors( $url );
+	
+	if ( !stristr( $url, 'http' ) && !stristr( $url, 'mailto' ) )  { 
+		array_push( $urls, $url );
 	}
+}
+
+function strip_hash_anchors( $url  ) {
+	if( !stristr( $url, '#' ) ) {
+		return $url;
+	}
+	return preg_replace( '|(.*)#.*|', '\\1', $url );
+}
+
+$urls = array_unique( $urls );
+sort( $urls );
+foreach( $urls as $url ) {
+	echo $url.PHP_EOL;	
 }
